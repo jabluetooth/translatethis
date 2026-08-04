@@ -1,12 +1,38 @@
 # TranslateThis
 
-Turns technical writing into stakeholder-ready translations. Paste text or drag in a file, pick an audience level and tone, hit Translate. See [`TranslateThis_PRD_v1.1.md`](./TranslateThis_PRD_v1.1.md) for the product spec and the audit notes behind the decisions below.
+**Technical writing, translated into plain English.**
 
-## Status
+Ever written an incident report, a PR description, or a security update and then had to write it *again* — a simpler version — for your manager, a customer, or someone in legal? TranslateThis does that second version for you.
 
-The core flow is fully wired and runnable: text/file input → Groq (streamed) → translated output. Anonymous visitors get 3 free translations/day (Upstash-backed); signed-in users (Clerk) get 20/month and their translations are saved to Supabase/Postgres automatically, visible in a history panel on the page. **Live tiers today: Free (anonymous) and signed-in Free.** Pro (₱170 one-time, 30-day pass via PayMongo) is fully built and tested but hidden on `/pricing` — shows "Coming soon" — until `PAYMONGO_SECRET_KEY` is set; no PayMongo account exists yet. Monitoring is still a stub — see "What's stubbed" below.
+Paste in some text (or just drag in a file), tell it who's going to read it and how it should sound, and hit **Translate**. A few seconds later you've got a version that makes sense to a non-technical reader, without losing the important facts.
 
-## Quick start
+## What it's good for
+
+- **Incident write-ups** → a calm, board-ready summary of what broke and what you did about it
+- **Pull request descriptions** → a plain-English changelog line for a release email
+- **Security patch notes** → a risk explanation your legal or compliance team can actually act on
+- **Sprint retros** → a team-health summary your manager can skim in 30 seconds
+
+You choose:
+- **How technical it should sound** — from "board-ready, zero jargon" to "still technical, just explained"
+- **The tone** — professional, casual, reassuring, or urgent
+- **The shape of the output** — a paragraph, bullet points, or a ready-to-send email
+
+## Try it
+
+- **No account needed** — paste text or drop a file (`.txt`, `.md`, `.log`, `.pdf`, `.docx`) and translate a few times for free, no sign-up.
+- **Sign in** for a bigger monthly allowance, plus TranslateThis remembers your past translations so you can find them again later.
+- **Go Pro** for a small one-time payment (₱170, lasts 30 days) if you need it a lot — no subscription, no auto-billing, just a pass that runs out.
+
+*(This is a personal project, not a hosted product yet — see "For developers" below to run it yourself.)*
+
+---
+
+## For developers
+
+The rest of this document is technical reference for building, running, or extending the app.
+
+### Quick start
 
 ```bash
 npm install
@@ -17,9 +43,15 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). Without `GROQ_API_KEY` set, the UI loads but translation requests return a clear 503 rather than failing silently.
 
-Health check: `GET /api/health` reports whether Groq is configured.
+Health check: `GET /api/health` reports whether the process is up.
 
-## Stack
+See [`TranslateThis_PRD_v1.1.md`](./TranslateThis_PRD_v1.1.md) for the full product spec and the audit notes behind the original tech decisions.
+
+### Status
+
+The core flow is fully wired and runnable: text/file input → Groq (streamed) → translated output. Anonymous visitors get 3 free translations/day (Upstash-backed); signed-in users (Clerk) get 20/month and their translations are saved to Supabase/Postgres automatically, visible in a history panel on the page. **Live tiers today: Free (anonymous) and signed-in Free.** Pro (₱170 one-time, 30-day pass via PayMongo) is fully built and tested but hidden on `/pricing` — shows "Coming soon" — until `PAYMONGO_SECRET_KEY` is set; no PayMongo account exists yet. Monitoring is still a stub — see "What's stubbed" below.
+
+### Stack
 
 | Layer | Choice | Why |
 |---|---|---|
@@ -34,7 +66,7 @@ Health check: `GET /api/health` reports whether Groq is configured.
 | Payments | PayMongo, hosted Checkout Session, live | PH-based (Stripe doesn't support PH merchant payouts). Sells a one-time 30-day Pro pass, **not** a recurring subscription — PayMongo's hosted Checkout is one-time-payment only; true recurring billing needs their separate Subscriptions API, which has no hosted page and requires building custom card-vaulting UI. Not worth the complexity here — see `src/lib/paymongo.ts` |
 | Monitoring | Sentry + PostHog (both no-op until DSN/key set) | `src/instrumentation.ts` / `src/instrumentation-client.ts` |
 
-## Project layout
+### Project layout
 
 ```
 src/
@@ -64,14 +96,14 @@ src/
 
 Note on `useUser()`: any component that calls Clerk's client hooks is only ever *mounted* (not just internally early-returned) when a server-side `isAuthConfigured()` check has already confirmed `<ClerkProvider>` is present — see the `authEnabled` prop threaded from `page.tsx` into `TranslateWorkspace`/`QuotaHint`, and the conditional `{authEnabled && <HistoryPanel />}`. Calling a Clerk hook without a `ClerkProvider` ancestor is a real crash risk, not just a style preference.
 
-## What's stubbed (and why)
+### What's stubbed (and why)
 
 No credentials were available while scaffolding most of this, so anything beyond the core translate flow + auth is wired for correctness but not exercised against a real service yet. Each stub fails loud and specific rather than silently:
 
 - **Database (Supabase/Drizzle)**: `users`/`translations`/Pro status are all live. `organizations`/`glossary_terms` (Team tier) still have no reads/writes — there's no Team tier for sale (see PRD audit note on why it was deliberately left off `/pricing`).
 - **Monitoring**: Sentry and PostHog both check for their env vars before initializing; everything else works identically with or without them.
 
-## Security
+### Security
 
 A full audit (`quality-guardian`) ran against this codebase and found 21 real issues, all fixed and individually verified (typecheck/lint clean, plus targeted runtime tests against the live dev server and the real Supabase instance — not just "it compiles"). Worth knowing what changed and why, since some of it affects how you'd extend this code:
 
@@ -86,7 +118,7 @@ A full audit (`quality-guardian`) ran against this codebase and found 21 real is
 - **History deletion is real, not just documented as an intent.** `DELETE /api/history/[id]` and `DELETE /api/history` (clear all) exist and are scoped to the signed-in user's own rows — this is the actual right-to-erasure path referenced in `schema.ts`'s comment on the `translations` table (signing in is the consent boundary for auto-save; deleting is how you withdraw it, there's no separate opt-in checkbox).
 - **Config-error messages no longer leak to unauthenticated callers.** A missing `GROQ_API_KEY` now returns a generic "temporarily unavailable" to the client (the real cause is logged server-side); `/api/health` no longer reports which services are configured.
 
-### Testing the PayMongo webhook locally
+#### Testing the PayMongo webhook locally
 
 PayMongo's servers can't reach `localhost`, so real webhook delivery only works once deployed with a public URL registered in their dashboard. To test the handler locally, sign a fake event yourself with the same algorithm PayMongo uses (see `src/lib/paymongo.ts`'s `verifyPaymongoWebhook` — implemented from the official PHP SDK's source, since PayMongo's docs site had several 404s mid-restructure when this was built) and POST it directly:
 
@@ -102,11 +134,11 @@ const sig = createHmac("sha256", secret).update(`${ts}.${body}`).digest("hex");
 // POST body to /api/paymongo/webhook with header: Paymongo-Signature: t=${ts},te=${sig},li=
 ```
 
-## Known gap vs. the PRD
+### Known gap vs. the PRD
 
 The naming collision flagged in the PRD's audit section (§0) — an existing App Store app is also called "TranslateThis" — is a product/legal decision, not something code can fix. Resolve before public launch.
 
-## Commands
+### Commands
 
 ```bash
 npm run dev          # start dev server (Turbopack)
