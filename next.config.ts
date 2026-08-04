@@ -21,6 +21,7 @@ const cspHeader = `
   img-src 'self' blob: data: https://img.clerk.com;
   font-src 'self' data:;
   connect-src 'self' https://*.clerk.accounts.dev https://*.clerk.com https://api.groq.com https://*.supabase.co https://*.posthog.com https://*.sentry.io;
+  worker-src 'self' blob:;
   object-src 'none';
   base-uri 'self';
   form-action 'self';

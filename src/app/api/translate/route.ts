@@ -58,7 +58,18 @@ export async function POST(request: Request) {
   // worth it here since it decides which rate-limit tier applies (Upstash
   // account-tier quota doesn't depend on Postgres, so this stays independent
   // of whether syncUser()/saveTranslation() below succeed).
-  const account = await getCurrentAccount();
+  //
+  // Explicitly guarded: a Clerk hiccup (key mismatch, transient API issue)
+  // must degrade to the anonymous flow, not crash the whole request into a
+  // bare 500 — every other failure path in this route already degrades
+  // gracefully, this one was a gap.
+  let account: Awaited<ReturnType<typeof getCurrentAccount>> = null;
+  try {
+    account = await getCurrentAccount();
+  } catch (error) {
+    console.error("[translate] getCurrentAccount failed, treating as anonymous:", error);
+    captureException(error, { route: "/api/translate", stage: "getCurrentAccount" });
+  }
 
   let isPro = false;
   let proCheckFailed = false;
