@@ -32,6 +32,14 @@ const cspHeader = `
   .trim();
 
 const nextConfig: NextConfig = {
+  // pdf-parse (via pdfjs-dist's legacy Node build) and its optional
+  // @napi-rs/canvas dependency use native Node.js require()/binary
+  // resolution — bundling them would risk breaking that (see
+  // src/lib/file-parser.ts for why @napi-rs/canvas is a real dependency
+  // here: pdfjs-dist needs it to polyfill DOMMatrix, which it constructs at
+  // module-evaluation time regardless of which functions actually get
+  // called).
+  serverExternalPackages: ["pdf-parse", "pdfjs-dist", "@napi-rs/canvas"],
   async headers() {
     return [
       {
