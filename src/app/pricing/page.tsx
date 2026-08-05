@@ -24,7 +24,7 @@ export default async function PricingPage({ searchParams }: PageProps<"/pricing"
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-10 sm:px-6 lg:px-8">
       <header className="space-y-3">
         <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Pricing</p>
-        <h1 className="font-heading text-4xl font-normal tracking-tight text-balance sm:text-5xl">Simple, upfront pricing</h1>
+        <h1 className="font-heading text-4xl font-bold tracking-tight text-balance sm:text-5xl">Simple, upfront pricing</h1>
         <p className="max-w-xl text-base text-muted-foreground sm:text-lg">
           No subscriptions, no surprise charges — just a {PRO_PASS_DAYS}-day Pro pass when you need more than the free quota.
         </p>

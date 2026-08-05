@@ -13,7 +13,7 @@ export default function Home() {
       <header className="flex items-start justify-between gap-4">
         <div className="space-y-3">
           <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Technical in, plain English out</p>
-          <h1 className="font-heading text-4xl font-normal tracking-tight text-balance sm:text-5xl">TranslateThis</h1>
+          <h1 className="font-heading text-4xl font-bold tracking-tight text-balance sm:text-5xl">TranslateThis</h1>
           <TypewriterText
             text="Paste text or drag in a file, pick an audience level and tone, and translate."
             className="max-w-xl text-base text-muted-foreground sm:text-lg"

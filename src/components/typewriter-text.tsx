@@ -17,7 +17,7 @@ interface TypewriterTextProps {
  * (the animated version is aria-hidden) — the animation is decorative, not
  * the content.
  */
-export function TypewriterText({ text, className, speed = 30, startDelay = 300 }: TypewriterTextProps) {
+export function TypewriterText({ text, className, speed = 65, startDelay = 400 }: TypewriterTextProps) {
   const [shown, setShown] = useState("");
   const [done, setDone] = useState(false);
 

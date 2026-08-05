@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Courier_Prime, Special_Elite } from "next/font/google";
+import { Courier_Prime, Space_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { isAuthConfigured } from "@/lib/auth";
@@ -15,12 +15,13 @@ const courierPrime = Courier_Prime({
   weight: ["400", "700"],
 });
 
-// Headings only: Special Elite — an actual distressed typewriter face, used
-// sparingly (it's single-weight and a lot at body size) for character.
-const specialElite = Special_Elite({
-  variable: "--font-special-elite",
+// Headings only: Space Mono — a cleaner, bolder monospace than Special
+// Elite (which was rough/distressed and stuck at one weight). Still reads
+// as typewriter-inspired, but with an actual bold weight for hierarchy.
+const spaceMono = Space_Mono({
+  variable: "--font-space-mono",
   subsets: ["latin"],
-  weight: "400",
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -33,7 +34,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
-      className={`${courierPrime.variable} ${specialElite.variable} h-full antialiased`}
+      className={`${courierPrime.variable} ${spaceMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <TooltipProvider>
