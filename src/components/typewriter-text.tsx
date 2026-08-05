@@ -63,7 +63,7 @@ export function TypewriterText({ text, className, speed = 65, startDelay = 400 }
       <span aria-hidden="true">
         {shown}
         <span
-          className={`ml-0.5 inline-block h-[1em] translate-y-[.2em] w-[2px] bg-current align-text-bottom ${done ? "animate-pulse" : "opacity-70"}`}
+          className={`ml-0.5 inline-block h-[1em] translate-y-[-.1em] w-[2px] bg-current align-text-bottom ${done ? "animate-pulse" : "opacity-70"}`}
         />
       </span>
       <span className="sr-only">{text}</span>
