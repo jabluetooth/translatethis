@@ -40,6 +40,21 @@ const nextConfig: NextConfig = {
   // module-evaluation time regardless of which functions actually get
   // called).
   serverExternalPackages: ["pdf-parse", "pdfjs-dist", "@napi-rs/canvas"],
+  // @napi-rs/canvas is only ever required from *inside* pdfjs-dist (wrapped
+  // in its own try/catch), never directly from our code — Next's file
+  // tracer (@vercel/nft) statically analyzes require()/import calls to
+  // decide what to copy into the deployed function, and is known to miss
+  // requires like that (conditional/try-caught, inside an already-external
+  // package). Confirmed: this exact gap caused "Cannot find module
+  // '@napi-rs/canvas'" in production even after adding it as a real
+  // dependency and marking it external above — the package was installed,
+  // just not traced into the deployment bundle. The glob covers the whole
+  // @napi-rs scope so whichever platform-specific binary npm actually
+  // installs (@napi-rs/canvas-linux-x64-gnu on Vercel) gets included too,
+  // not just the main package.
+  outputFileTracingIncludes: {
+    "/api/translate": ["./node_modules/@napi-rs/**/*"],
+  },
   async headers() {
     return [
       {
